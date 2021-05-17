@@ -6,14 +6,7 @@ module org.openjfx.gradle.javafx.test {
 
     requires com.jfoenix;
 
-    exports com.jpro.hellojpro;
-    exports com.jpro.eevis;
-    exports org.vaccs.eevis.ast;
-    exports org.vaccs.eevis.driver;
-    exports org.vaccs.eevis.iloc;
-    exports org.vaccs.eevis.parser;
-    exports org.vaccs.eevis.util;
-    exports org.vaccs.eevis.vaccsio;
-    exports org.vaccs.eevis.value;
-    exports org.vaccs.eevis.visitor;
+    exports com.jpro.ir;
+    exports org.vaccs.ir.util;
+    exports org.vaccs.ir.value;
 }

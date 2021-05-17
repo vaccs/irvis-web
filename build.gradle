@@ -29,7 +29,6 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'org.openjfx.javafxplugin'
-apply plugin: 'antlr'
 
 compileJava {
   sourceCompatibility = 11
@@ -42,27 +41,8 @@ repositories {
 }
 
 dependencies {
-    antlr "org.antlr:antlr4:4.7.2"
     implementation 'com.jfoenix:jfoenix:9.0.10'
 }
-
-generateGrammarSource {
-    maxHeapSize = "64m"
-    arguments += ["-visitor", "-listener", "-package", "org.vaccs.eevis.parser" ]
-    // Keep a copy of generated sources
-    doLast {
-        println "Copying generated grammar lexer/parser files to main directory."
-        copy {
-            from "${buildDir}/generated-src/antlr/main"
-            into "generated-src/main/java"
-        }
-    }
-}
-
-clean.doLast {
-    file('generated-src').deleteDir()
-}
-
 
 javafx {
     version='15.0.1'
@@ -79,7 +59,7 @@ apply plugin: 'com.sandec.jpro'
 /**
  * App Main Class
  */
-mainClassName = 'com.jpro.eevis.UIExpressionEvaluation'
+mainClassName = 'com.jpro.ir.UISplashScreen'
 
 /**
  * jpro settings

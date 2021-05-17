@@ -1,10 +1,10 @@
-package com.ir;
+package com.jpro.ir;
 
 import java.util.*;
 import javafx.scene.*;
 import javafx.scene.layout.*;
-import util.ArchitectureType;
-import util.BIT64Architecture;
+import org.vaccs.ir.util.ArchitectureType;
+import org.vaccs.ir.util.BIT64Architecture;
 
 public class UIUtils {
 

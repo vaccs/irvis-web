@@ -5,7 +5,7 @@ package org.vaccs.ir.value;
 
 import java.math.BigInteger;
 
-import util.CTypeTables;
+import org.vaccs.ir.util.CTypeTables;
 
 /**
  * @author carr

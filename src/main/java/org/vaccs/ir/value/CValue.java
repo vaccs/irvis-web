@@ -3,10 +3,10 @@
  */
 package org.vaccs.ir.value;
 
-import util.ArchitectureType;
-import util.BIT32Architecture;
-import util.BIT64Architecture;
-import visual.UIUtils;
+import org.vaccs.ir.util.ArchitectureType;
+import org.vaccs.ir.util.BIT32Architecture;
+import org.vaccs.ir.util.BIT64Architecture;
+import com.jpro.ir.UIUtils;
 
 /**
  * @author carr

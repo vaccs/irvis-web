@@ -1,13 +1,12 @@
-package com.ir;
+package com.jpro.ir;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.math.*;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
+
+import com.jpro.webapi.WebAPI;
 
 import javafx.beans.value.*;
 import javafx.geometry.*;
@@ -15,59 +14,45 @@ import javafx.scene.*;
 import javafx.scene.canvas.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.text.*;
 import javafx.stage.*;
-import util.ArchitectureType;
-import util.HttpsUtils;
-import value.CValue;
-import value.CValueFactory;
+import org.vaccs.ir.util.ArchitectureType;
+import org.vaccs.ir.value.CValue;
+import org.vaccs.ir.value.CValueFactory;
 
 public class UIVariableRepresentation {
 
-  private static String currentVersion = "";
-  private static Canvas canvas, canvasBottom;
-  private static GraphicsContext gc, gcBottom;
+  private Canvas canvas, canvasBottom;
+  private GraphicsContext gc, gcBottom;
 
-  public static double fontSize = 1.0;
-  // private static VariableRepresentation representation;
-  private static CValue topValue;
-  private static CValue bottomValue;
-  private static CValueFactory factory = new CValueFactory();
-  public static Scene scene = null;
-  private static boolean updateInProgress;
-  private static Stage window;
+  public double fontSize = 1.0;
+  private CValue topValue;
+  private CValue bottomValue;
+  private CValueFactory factory = new CValueFactory();
+  private Scene scene;
+  private boolean updateInProgress = false;
 
-  private static ComboBox<String> cboTopEndianness;
-  private static ComboBox<String> cboTopType;
-  private static TextField txtBytesTop;
-  private static TextField txtValueTop;
+  private ComboBox<String> cboTopEndianness;
+  private ComboBox<String> cboTopType;
+  private TextField txtBytesTop;
+  private TextField txtValueTop;
 
-  private static ComboBox<String> cboBottomEndianness;
-  private static ComboBox<String> cboBottomType;
-  private static TextField txtBytesBottom;
-  private static TextField txtValueBottom;
+  private ComboBox<String> cboBottomEndianness;
+  private ComboBox<String> cboBottomType;
+  private TextField txtBytesBottom;
+  private TextField txtValueBottom;
 
-  private static String versionURL;
-  private static String tgzURL;
-  private static String javafxVersion = "javafx-sdk-11.0.2";
+  public Scene createDisplay(WebAPI webapi, Stage window, String typeIn, String value) {
 
-  public static void display(String typeIn, String value) {
-    versionURL = "https://github.com/vaccs/irvis-" + getOS() + "/blob/master/version.txt";
-    tgzURL = "https://github.com/vaccs/irvis-" + getOS() + "/archive/";
-
-    updateInProgress = false;
-
-    window = new Stage();
     window.setTitle("Integer Representations");
     window.initModality(Modality.APPLICATION_MODAL);
 
     topValue = factory.makeCValue(typeIn).addValue(value, typeIn);
-
-    BorderPane container = new BorderPane();
 
     GridPane grid = new GridPane();
     grid.setHgap(8);
@@ -208,170 +193,37 @@ public class UIVariableRepresentation {
     txtBytesBottom = new TextField(bottomValue.getHexValue());
     grid.add(txtBytesBottom, 0, 7, 3, 1);
 
-    // View menu
-    Menu viewMenu = new Menu("Menu");
+    Button button = new Button("About");
+    button.setOnAction(e -> {
 
-    MenuItem menuIncreaseFontSize = new MenuItem("Increase Font Size");
-    menuIncreaseFontSize.setOnAction(e -> {
-      if (fontSize < 5.0)
-        fontSize += 0.1;
-      grid.setStyle("-fx-font-size: " + UIUtils.calculateFontSize(fontSize, scene.getWidth(), scene.getHeight()));
-    });
-    menuIncreaseFontSize.setAccelerator(new KeyCodeCombination(KeyCode.EQUALS, KeyCombination.CONTROL_DOWN));
-    viewMenu.getItems().add(menuIncreaseFontSize);
+      Label label = new Label(
+          "Author: James Walker\nand Steve Carr\nThis work has been supported by the National Science Foundation under grants DUE-1245310,  DGE-1522883, DGE-1523017, IIS-1456763, and IIS-1455886.");
+      label.setWrapText(true);
+      label.setTextAlignment(TextAlignment.CENTER);
 
-    MenuItem menuDecreaseFontSize = new MenuItem("Decrease Font Size");
-    menuDecreaseFontSize.setOnAction(e -> {
-      if (fontSize > 0.1)
-        fontSize -= 0.1;
-      grid.setStyle("-fx-font-size: " + UIUtils.calculateFontSize(fontSize, scene.getWidth(), scene.getHeight()));
-    });
-    menuDecreaseFontSize.setAccelerator(new KeyCodeCombination(KeyCode.MINUS, KeyCombination.CONTROL_DOWN));
-    viewMenu.getItems().add(menuDecreaseFontSize);
+      Image image = new Image("file:assets/splash.png");
+      ImageView imv = new ImageView();
+      imv.setImage(image);
 
-    MenuItem checkForUpdates = new MenuItem("Check for Updates");
-    checkForUpdates.setOnAction(e -> {
-      HttpsUtils hUtil = new HttpsUtils();
-      String latestVersion = "";
-      try {
-        latestVersion = parseHTMLDataForVersion(hUtil.getDataFileContents(versionURL));
-      } catch (IOException e1) {
-        latestVersion = currentVersion;
-      }
-      try {
-        if (latestIsNewer(latestVersion)) {
-          askForDownload(hUtil, latestVersion);
-          return;
-        }
-      } catch (URISyntaxException | IOException e1) {
-      }
+      VBox layout = new VBox();
+      layout.setSpacing(50);
+      layout.getChildren().addAll(imv, label);
+      layout.setAlignment(Pos.CENTER);
 
-      Alert info = new Alert(AlertType.INFORMATION);
-      info.setTitle("Check irvis version Dialog");
-      info.setHeaderText("Your version is up-to-date.");
-      info.setContentText("No irvis update needed.");
-      info.showAndWait();
-
-    });
-    viewMenu.getItems().add(checkForUpdates);
-    // Main menu bar
-    MenuBar menuBar = new MenuBar();
-    menuBar.getMenus().addAll(viewMenu);
-
-    MenuItem menuQuit = new MenuItem("Quit");
-    menuQuit.setOnAction(e -> {
-      ButtonType yesButtonType = new ButtonType("Yes", ButtonData.YES);
-      ButtonType noButtonType = new ButtonType("No", ButtonData.NO);
-      Dialog<ButtonType> dialog = new Dialog<>();
-      dialog.setTitle("Quit irvis Dialog");
-      dialog.setContentText("Do you want to quit irvis?");
-      dialog.getDialogPane().getButtonTypes().add(noButtonType);
-      dialog.getDialogPane().getButtonTypes().add(yesButtonType);
-      boolean disabled = false; // computed based on content of text fields, for example
-      dialog.getDialogPane().lookupButton(yesButtonType).setDisable(disabled);
-      dialog.getDialogPane().lookupButton(noButtonType).setDisable(disabled);
-      dialog.showAndWait().filter(response -> response.getText() == "Yes").ifPresent(response -> System.exit(0));
-    });
-    viewMenu.getItems().add(menuQuit);
-
-    container.setTop(menuBar);
-    container.setCenter(grid);
-
-    scene = new Scene(container, 800, 600);
-
-    // scene size change listeners
-    scene.widthProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneWidth,
-          Number newSceneWidth) {
-        grid.setStyle("-fx-font-size: " + UIUtils.calculateFontSize(fontSize, scene.getWidth(), scene.getHeight()));
-      }
-    });
-    scene.heightProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneHeight,
-          Number newSceneHeight) {
-        grid.setStyle("-fx-font-size: " + UIUtils.calculateFontSize(fontSize, scene.getWidth(), scene.getHeight()));
-      }
+      Scene aboutScene = new Scene(layout, 500, 500);
+      final Stage aboutWindow = new Stage();
+      aboutWindow.setScene(aboutScene);
+      webapi.openStageAsPopup(aboutWindow);
     });
 
-    window.setScene(scene);
-    window.showAndWait();
+    grid.add(button, 0, 8, 1, 1);
+
+    StackPane sp = new StackPane(grid);
+    scene = new Scene(sp);
+    return scene;
   }
 
-  private static String parseHTMLDataForVersion(String dataFileContents) {
-    String version = currentVersion;
-    int index = dataFileContents.indexOf("<td id=\"LC1\"");
-    String rest = dataFileContents.substring(index);
-    index = rest.indexOf('>');
-    version = rest.substring(index + 1, rest.indexOf("</td>"));
-
-    return version;
-  }
-
-  private static void askForDownload(HttpsUtils hUtil, String newVersion) {
-
-    ButtonType yesButtonType = new ButtonType("Yes", ButtonData.YES);
-    ButtonType noButtonType = new ButtonType("No", ButtonData.NO);
-    Dialog<ButtonType> dialog = new Dialog<>();
-    dialog.setTitle("New irvis Version Dialog");
-    dialog.setContentText("A new version (" + newVersion +") of irvis is available. Do you want to install it?");
-    dialog.getDialogPane().getButtonTypes().add(noButtonType);
-    dialog.getDialogPane().getButtonTypes().add(yesButtonType);
-    boolean disabled = false; // computed based on content of text fields, for example
-    dialog.getDialogPane().lookupButton(yesButtonType).setDisable(disabled);
-    dialog.getDialogPane().lookupButton(noButtonType).setDisable(disabled);
-    dialog.showAndWait().filter(response -> response.getText() == "Yes").ifPresent(response -> {
-      String jarDir = "";
-      try {
-        jarDir = new File(UIVariableRepresentation.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-            .getParent();
-      } catch (URISyntaxException e) {
-        Alert info = new Alert(AlertType.INFORMATION);
-        info.setTitle("Download irvis Dialog");
-        info.setHeaderText("Unable to determine installation directory automatically.");
-        info.setContentText("New irvis not installed.");
-        info.showAndWait();
-        return;
-      }
-      try {
-        Alert info = new Alert(AlertType.INFORMATION);
-        info.setTitle("Download irvis Dialog");
-        info.setHeaderText("A new version of irvis wil download and install");
-        info.setContentText("This may take awhile and irvis will restart when done");
-        info.showAndWait();
-        String dir = jarDir + System.getProperty("file.separator");
-        hUtil.getTarGzipFile(tgzURL + newVersion + ".tar.gz", dir, javafxVersion, true);
-        restartApplication();
-      } catch (IOException e) {
-        Alert info = new Alert(AlertType.INFORMATION);
-        info.setTitle("Download irvis Dialog");
-        info.setHeaderText("Error downloading and installing new version of irvis");
-        info.setContentText("Installation failed.\n" + jarDir + System.getProperty("file.separator") + "\n" + tgzURL
-            + newVersion + ".tar.gz");
-        info.showAndWait();
-        return;
-      }
-    });
-
-  }
-
-  private static boolean latestIsNewer(String latestVersion) throws URISyntaxException, IOException {
-    String dir = new File(UIVariableRepresentation.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-        .getParent();
-    currentVersion = Files.readString(Paths.get(dir, "version.txt")).strip();
-    String[] latestVersionParts = latestVersion.split("\\.");
-    String[] currentVersionParts = currentVersion.split("\\.");
-
-    int latestVersionNum = Integer.parseInt(latestVersionParts[0]) * 10000
-        + Integer.parseInt(latestVersionParts[1]) * 100 + Integer.parseInt(latestVersionParts[2]);
-    int currentVersionNum = Integer.parseInt(currentVersionParts[0]) * 10000
-        + Integer.parseInt(currentVersionParts[1]) * 100 + Integer.parseInt(currentVersionParts[2]);
-
-    return latestVersionNum > currentVersionNum;
-  }
-
-  private static String getOS() {
+  private String getOS() {
     switch (System.getProperty("os.name")) {
       case "Mac OS X":
         return "MacOS";
@@ -384,7 +236,7 @@ public class UIVariableRepresentation {
     }
   }
 
-  private static CValue createValue(CValue value, String newValue, String type, String endian) {
+  private CValue createValue(CValue value, String newValue, String type, String endian) {
     try {
       value = factory.makeCValue(type).addValue(newValue, type).addEndian(endian);
     } catch (NumberFormatException e) {
@@ -398,7 +250,7 @@ public class UIVariableRepresentation {
     return value;
   }
 
-  private static String getConvertedValue(CValue value, String typeS) {
+  private String getConvertedValue(CValue value, String typeS) {
     switch (typeS) {
       case CValue.CHAR:
         return Byte.toString(value.getByteValue());
@@ -420,7 +272,7 @@ public class UIVariableRepresentation {
     return null; // should never reach here
   }
 
-  private static void updateUI() {
+  private void updateUI() {
     updateInProgress = true;
     txtBytesTop.setText(topValue.getHexValueWithError());
 
@@ -438,7 +290,7 @@ public class UIVariableRepresentation {
     updateInProgress = false;
   }
 
-  private static int getIndexFromType(String type) {
+  private int getIndexFromType(String type) {
     switch (type) {
       case CValue.CHAR:
         return 0;
@@ -462,7 +314,7 @@ public class UIVariableRepresentation {
     }
   }
 
-  private static String getMaxSizeByType(String type) {
+  private String getMaxSizeByType(String type) {
     if (type.equals(CValue.CHAR))
       return UIUtils.architecture.getMaxCharLabel();
     else if (type.equals(CValue.UCHAR))
@@ -483,7 +335,7 @@ public class UIVariableRepresentation {
     return "Unknown";
   }
 
-  private static String getMinSizeByType(String type) {
+  private String getMinSizeByType(String type) {
     if (type.equals(CValue.CHAR))
       return UIUtils.architecture.getMinCharLabel();
     else if (type.equals(CValue.UCHAR))
@@ -504,7 +356,7 @@ public class UIVariableRepresentation {
     return "Unknown";
   }
 
-  private static void drawVisualization(double width, double height, GraphicsContext gc, String value, String decValue,
+  private void drawVisualization(double width, double height, GraphicsContext gc, String value, String decValue,
       String type) {
     BigDecimal min = BigDecimal.ZERO;
     BigDecimal max = BigDecimal.ZERO;
@@ -613,76 +465,4 @@ public class UIVariableRepresentation {
     gc.strokeLine(width * proportion - 10, height / 2.0, width * proportion + 10, height / 2.0);
   }
 
-  /**
-   * Code modified from https://dzone.com/articles/programmatically-restart-java`
-   * since that version did not work. Sun property pointing the main class and its
-   * arguments. Might not be defined on non Hotspot VM implementations.
-   */
-  private static final String SUN_JAVA_COMMAND = "sun.java.command";
-
-  /**
-   * Restart the current Java application
-   * 
-   * @param runBeforeRestart some custom code to be run before restarting
-   * @throws IOException
-   */
-  private static void restartApplication(/* Runnable runBeforeRestart */) throws IOException {
-    try {
-      // java binary
-      String java = System.getProperty("java.home") + "/bin/java";
-      // vm arguments
-      List<String> vmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-      String vmArgsOneLine = new String();
-      for (String arg : vmArguments) {
-        // if it's the agent argument : we ignore it otherwise the
-        // address of the old application and the new one will be in conflict
-        if (!arg.contains("-agentlib")) {
-          vmArgsOneLine += (arg + " ");
-        }
-      }
-      // init the command to execute, add the vm args
-      String cmd = java + " " + vmArgsOneLine + " ";
-
-      // program main and program arguments
-      String[] mainCommand = System.getProperty(SUN_JAVA_COMMAND).split(" ");
-      // program main is a jar
-      cmd += "-jar " + new File(mainCommand[0]).getAbsolutePath();
-      // finally add program arguments
-      for (int i = 1; i < mainCommand.length; i++) {
-        cmd += (" " + (mainCommand[i]));
-      }
-      // execute the command in a shutdown hook, to be sure that all the
-      // resources have been disposed before restarting the application
-
-      final String command = cmd;
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          try {
-            Runtime.getRuntime().exec(command);
-          } catch (IOException e) {
-            Alert info = new Alert(AlertType.INFORMATION);
-            info.setTitle("Download irvis Dialog");
-            info.setHeaderText("Error restarting irvis");
-            info.setContentText("Restart manually.");
-            info.showAndWait();
-            return;
-          }
-        }
-      });
-      // execute some custom code before restarting
-      // if (runBeforeRestart != null) {
-      // runBeforeRestart.run();
-      // }
-      // exit
-      System.exit(0);
-    } catch (Exception e) {
-      Alert info = new Alert(AlertType.INFORMATION);
-      info.setTitle("Download irvis Dialog");
-      info.setHeaderText("Error restarting irvis");
-      info.setContentText("Restart manually.");
-      info.showAndWait();
-      return;
-    }
-  }
 }

@@ -2,8 +2,8 @@ package org.vaccs.ir.value;
 
 import java.math.BigInteger;
 
-import util.CTypeTables;
-import value.CValue;
+import org.vaccs.ir.util.CTypeTables;
+import org.vaccs.ir.value.CValue;
 
 /**
  * 
