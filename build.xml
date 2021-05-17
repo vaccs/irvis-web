@@ -1,0 +1,69 @@
+<?xml version = "1.0"?>
+<project name = "ExpressionEvaluatorVis" basedir = "." default = "build">
+	<property name = "src.dir" value = "src"/>
+	<property name = "build.dir" value = "classes"/>
+        <property name = "lib.dir" value = "lib"/>
+	<property name = "test.dir" value = "src/test"/>
+        <property name = "javafx.dir" value = "javafx-sdk-11.0.2-Windows/lib"/>
+
+	<path id = "master-classpath">
+                <pathelement path = "${build.dir}"/>
+		<fileset dir = "${lib.dir}">
+			<include name = "*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="print-classpath">
+	  <pathconvert property="classpathInName" refid="master-classpath" />
+	  <echo>Classpath is ${classpathInName}</echo>
+        </target>
+
+	<target name = "info">
+		<echo>ExpressionEvaluatorVis</echo>
+	</target>
+        
+	<target name = "build" description = "Compile source files">
+		<mkdir dir = "${build.dir}"/>
+		<javac destdir = "${build.dir}" debug = "true"
+			deprecation = "false" optimize = "false" failonerror = "true"
+			includeantruntime = "true">
+			<compilerarg line = "--module-path ${javafx.dir} --add-modules javafx.controls"/>
+			<src path = "${src.dir}"/>
+			<classpath refid = "master-classpath"/>
+		</javac>
+	</target>
+	<target name = "build-jar">
+   		<jar destfile = "eevis.jar">
+                   <fileset dir="${build.dir}" includes="**/*.class"/>
+                   <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+		   <fileset dir="${src.dir}" includes = "assets/*.png"/>
+      		   <manifest>
+         		<attribute name = "Main-Class" value = "ui.UIExpressionEvaluation"/>
+      		   </manifest>
+   		</jar>
+	</target>
+	<target name = "clean" description = "Delete class files">
+		<delete>
+			<fileset dir = "${build.dir}">
+				<include name = "**/*.class"/>
+			</fileset>
+		</delete>
+	</target>
+        <target name="test" depends="build">
+
+         <junit printsummary="on" haltonfailure="no" logfailedtests = "true">
+
+			<!-- Project classpath, must include junit.jar -->
+			<classpath refid="master-classpath" />
+			<classpath location="${test.dir}" />
+
+			<test name="test.CExprTest"
+				haltonfailure="no" todir="${test.dir}">
+				<formatter type="plain" />
+				<formatter type="xml" />
+			</test>
+
+  	 </junit>
+	</target>
+
+</project>

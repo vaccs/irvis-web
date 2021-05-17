@@ -1,0 +1,6 @@
+*.class
+.gradle/
+logs/
+RUNNING_PID
+build/
+tmp/
