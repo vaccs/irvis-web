@@ -1,22 +1,15 @@
 package com.jpro.ir;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.math.*;
-import java.util.List;
 
 import com.jpro.webapi.WebAPI;
 
-import javafx.beans.value.*;
 import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.canvas.*;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.text.*;
@@ -108,6 +101,7 @@ public class UIVariableRepresentation {
     grid.add(cboTopEndianness, 1, 0, 1, 1);
 
     txtValueTop = new TextField(value);
+    txtValueTop.setPrefWidth(300.0);
     txtValueTop.textProperty().addListener((obs, oldValue, newValue) -> {
       if (!updateInProgress) {
         updateInProgress = true;
@@ -118,12 +112,20 @@ public class UIVariableRepresentation {
       }
 
     });
-    grid.add(txtValueTop, 2, 0, 1, 1);
+    Label txtValueLabel = new Label("Input Decimal Value: ");
+    txtValueLabel.setPadding(new Insets(10, 15, 10, 10));
+    HBox valueHBox = new HBox(5, txtValueLabel, txtValueTop);
+    grid.add(valueHBox, 2, 0, 1, 1);
 
     txtBytesTop = new TextField(topValue.getHexValueWithError());
-    grid.add(txtBytesTop, 0, 1, 3, 1);
+    txtBytesTop.setPrefWidth(300.0);
+    Label txtBytesTopLabel = new Label("Input Hex Value: ");
+    txtBytesTopLabel.setPadding(new Insets(10, 15, 10, 10));
+    HBox txtBytesTopBox = new HBox(5, txtBytesTopLabel, txtBytesTop);
+    grid.add(txtBytesTopBox, 0, 1, 3, 1);
 
-    Button btnDecrementValue = new Button("Decrement value (-)");
+    Button btnDecrementValue = new Button("Decrement value (-) ");
+    btnDecrementValue.setPadding(new Insets(10, 15, 10, 10));
     btnDecrementValue.setOnAction(e -> {
       topValue.decrement();
       txtValueTop.setText(topValue.toString()); // biv.toString()
@@ -131,7 +133,8 @@ public class UIVariableRepresentation {
     });
     grid.add(btnDecrementValue, 0, 2, 1, 1);
 
-    Button btnIncrementValue = new Button("Increment value (+)");
+    Button btnIncrementValue = new Button("Increment value (+) ");
+    btnIncrementValue.setPadding(new Insets(10, 15, 10, 10));
     btnIncrementValue.setOnAction(e -> {
       topValue.increment();
       txtValueTop.setText(topValue.toString()); // biv.toString()
@@ -160,11 +163,11 @@ public class UIVariableRepresentation {
     canvasBottom.heightProperty()
         .addListener(observable -> drawVisualization(canvasBottom.getWidth() - 10, canvasBottom.getHeight() - 10,
             gcBottom, bottomValue.getHexValue(), txtValueBottom.getText(), cboBottomType.getValue()));
-    grid.add(canvasBottom, 0, 4, 3, 1);
+    grid.add(canvasBottom, 0, 7, 3, 1);
 
     // Bottom part
     Label lblInterpret = new Label("Interpret As:");
-    grid.add(lblInterpret, 0, 5, 1, 1);
+    grid.add(lblInterpret, 0, 4, 1, 1);
 
     cboBottomType = new ComboBox<>();
     cboBottomType.getItems().addAll(CValue.CHAR, CValue.UCHAR, CValue.SHORT, CValue.USHORT, CValue.INT, CValue.UINT,
@@ -173,7 +176,7 @@ public class UIVariableRepresentation {
     cboBottomType.setOnAction(e -> {
       updateUI();
     });
-    grid.add(cboBottomType, 0, 6, 1, 1);
+    grid.add(cboBottomType, 0, 5, 1, 1);
 
     cboBottomEndianness = new ComboBox<>();
     cboBottomEndianness.getItems().addAll(ArchitectureType.BIG_ENDIAN, ArchitectureType.LITTLE_ENDIAN);
@@ -181,17 +184,25 @@ public class UIVariableRepresentation {
     cboBottomEndianness.setOnAction(e -> {
       updateUI();
     });
-    grid.add(cboBottomEndianness, 1, 6, 1, 1);
+    grid.add(cboBottomEndianness, 1, 5, 1, 1);
 
     bottomValue = factory.makeCValue(cboBottomType.getValue()).addValue(topValue, cboBottomType.getValue())
         .addEndian(cboBottomEndianness.getValue());
 
     txtValueBottom = new TextField(bottomValue.toString());
+    txtValueBottom.setPrefWidth(300.0);
+    Label lblValueBottom = new Label("Interpreted Decimal Value: ");
+    lblValueBottom.setPadding(new Insets(10, 15, 10, 10));
     txtValueBottom.setEditable(false);
-    grid.add(txtValueBottom, 2, 6, 1, 1);
+    HBox botValueHBox = new HBox(5, lblValueBottom, txtValueBottom);
+    grid.add(botValueHBox, 2, 5, 3, 1);
 
     txtBytesBottom = new TextField(bottomValue.getHexValue());
-    grid.add(txtBytesBottom, 0, 7, 3, 1);
+    txtBytesBottom.setPrefWidth(300.0);
+    Label txtBytesBtmLabel = new Label("Interpreted Hex Value: ");
+    txtBytesBtmLabel.setPadding(new Insets(10, 15, 10, 10));
+    HBox txtBytesBtmBox = new HBox(5, txtBytesBtmLabel, txtBytesBottom);
+    grid.add(txtBytesBtmBox, 0, 6, 3, 1);
 
     Button button = new Button("About");
     button.setOnAction(e -> {
@@ -221,19 +232,6 @@ public class UIVariableRepresentation {
     StackPane sp = new StackPane(grid);
     scene = new Scene(sp);
     return scene;
-  }
-
-  private String getOS() {
-    switch (System.getProperty("os.name")) {
-      case "Mac OS X":
-        return "MacOS";
-      case "Linux":
-        return "Linux";
-      case "Windows 10":
-        return "Windows";
-      default:
-        return "unsupportedOS";
-    }
   }
 
   private CValue createValue(CValue value, String newValue, String type, String endian) {
